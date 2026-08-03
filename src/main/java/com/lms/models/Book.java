@@ -5,12 +5,12 @@ import com.lms.exceptions.BookAlreadyReturnedException;
 import com.lms.exceptions.BookNotAvailableException;
 
 public class Book {
-    static String isbn;
-    String title;
-    String author;
+    private final String isbn;
+    private final String title;
+    private final String author;
     Genre.genre genre;
-    int totalCopies;
-    int availableCopies;
+    private final int totalCopies;
+    private int availableCopies;
 
     Book(String isbn, String title, String author, Genre.genre genre, int totalCopies, int availableCopies){
         this.isbn = isbn;
