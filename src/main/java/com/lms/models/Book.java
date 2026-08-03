@@ -8,20 +8,20 @@ public class Book {
     private final String isbn;
     private final String title;
     private final String author;
-    Genre.genre genre;
+    private final Genre genre;
     private final int totalCopies;
     private int availableCopies;
 
-    Book(String isbn, String title, String author, Genre.genre genre, int totalCopies, int availableCopies){
+    public Book(String isbn, String title, String author, Genre genre, int totalCopies, int availableCopies){
         this.isbn = isbn;
         this.title = title;
         this.author = author;
         this.genre = genre;
-        this.totalCopies = availableCopies;
+        this.totalCopies = totalCopies;
         this.availableCopies = availableCopies;
     }
 
-    public void borrowCopy(){
+    public void borrowCopy() throws BookNotAvailableException{
         if(availableCopies <= 0){
             throw new BookNotAvailableException("This book is not available at the moment.");
         }else{
@@ -29,7 +29,7 @@ public class Book {
         }
     }
 
-    public void returnCopy() throws BookAlreadyReturnedException{
+    public void returnCopy(){
         if(availableCopies < totalCopies){
             availableCopies++;
         }
@@ -54,11 +54,14 @@ public class Book {
         if (parts.length != 6) {
             throw new IllegalArgumentException("Invalid CSV record: " + line);
         }
-        return new Book(parts[0], parts[1], parts[2], Genre.genre.valueOf(parts[3]), Integer.parseInt(parts[4]), Integer.parseInt(parts[5]));
+        return new Book(parts[0], parts[1], parts[2], Genre.valueOf(parts[3]), Integer.parseInt(parts[4]), Integer.parseInt(parts[5]));
     }
 
     @Override
     public String toString(){
-        return "ISBN: " + isbn + "\nTitle: " + title + "\nAuthor: " + author + "\nGenre: " + genre.getDisplayName() + "\nAvailableCopies: " + availableCopies + "\nTotalCopies: " + totalCopies;
+        return String.format(
+                "ISBN: %s | Title: %s | Author: %s | Genre: %s | Available: %d/%d",
+                isbn, title, author, genre.getDisplayName(), availableCopies, totalCopies
+        );
     }
 }
