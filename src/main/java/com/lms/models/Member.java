@@ -7,17 +7,18 @@ import com.lms.exceptions.BorrowLimitExceededException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public abstract class Member {
     private String memberId;
     private String name;
     private String email;
-    MemberType.memberType memberType;
+    private MemberType memberType;
     private int currentBorrowCount;
     private List<String> borrowHistory;
 
-    public Member(String memberId, String name, String email, MemberType.memberType memberType, int currentBorrowCount, List<String> borrowHistory){
+    public Member(String memberId, String name, String email, MemberType memberType, int currentBorrowCount, List<String> borrowHistory){
         this.memberId = memberId;
         this.name = name;
         this.email = email;
@@ -26,11 +27,17 @@ public abstract class Member {
         this.borrowHistory = new ArrayList<>(borrowHistory);
     }
 
+    public String getMemberId()       { return memberId; }
+    public String getName()           { return name; }
+    public String getEmail()          { return email; }
+    public MemberType getMemberType() { return memberType; }
+    public int getCurrentBorrowCount(){ return currentBorrowCount; }
+
     public boolean canBorrow(){
         return currentBorrowCount < memberType.getBorrowLimit();
     }
 
-    public void recordBorrow(String recordId){
+    public void recordBorrow (String recordId) throws BorrowLimitExceededException{
         if(!canBorrow())
             throw new BorrowLimitExceededException("Cannot borrow more books: Borrow Limit Reached.");
         currentBorrowCount++;
@@ -42,7 +49,7 @@ public abstract class Member {
     }
 
     public List<String> getBorrowHistory(){
-        return borrowHistory;
+        return  Collections.unmodifiableList(borrowHistory);
     }
 
     public String toCSV(){
@@ -57,10 +64,10 @@ public abstract class Member {
 
     public static Member fromCSV(String line){
         String[] parts = line.split(",");
-        if (parts.length > 5) {
+        if (parts.length != 6) {
             throw new IllegalArgumentException("Invalid CSV record: " + line);
         }
-        MemberType.memberType type = MemberType.memberType.valueOf(parts[3]);
+        MemberType type = MemberType.valueOf(parts[3]);
         List<String> history = parts[5].isEmpty()
                 ? new ArrayList<>()
                 : new ArrayList<>(Arrays.asList(parts[5].split("\\|")));

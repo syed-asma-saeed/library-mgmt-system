@@ -9,7 +9,7 @@ import java.util.List;
 public class FacultyMember extends Member{
 
     public FacultyMember(String memberId, String name, String email, int currentBorrowCount, List<String> history){
-        super(memberId, name, email, MemberType.memberType.FACULTY, currentBorrowCount, history );
+        super(memberId, name, email, MemberType.FACULTY, currentBorrowCount, history );
     }
 
     @Override
@@ -20,6 +20,6 @@ public class FacultyMember extends Member{
             return 0.0;
         }
 
-        return daysOverdue * 2.0 * memberType.getFineMultiplier();
+        return daysOverdue * 2.0 * MemberType.FACULTY.getFineMultiplier();
     }
 }

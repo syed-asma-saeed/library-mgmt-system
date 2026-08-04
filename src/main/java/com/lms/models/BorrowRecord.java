@@ -37,6 +37,16 @@ public class BorrowRecord {
         this.returned = returned;
     }
 
+    public String getRecordId()      { return recordId; }
+    public String getMemberId()      { return memberId; }
+    public String getIsbn()          { return isbn; }
+    public LocalDate getBorrowDate() { return borrowDate; }
+    public LocalDate getDueDate()    { return dueDate; }
+    public LocalDate getReturnDate() { return returnDate; }
+    public double getFine()          { return fine; }
+    public boolean isReturned()      { return returned; }
+
+
     public void markReturned(LocalDate returnDate, double fine){
         this.returnDate = returnDate;
         this.fine = fine;
@@ -65,5 +75,13 @@ public class BorrowRecord {
             throw new IllegalArgumentException("Invalid CSV record: " + line);
         }
         return new BorrowRecord(parts[0], parts[1], parts[2], LocalDate.parse(parts[3]), LocalDate.parse(parts[4]), parts[5].equals("NULL") ? null : LocalDate.parse(parts[5]), Double.parseDouble(parts[6]), Boolean.parseBoolean(parts[7]));
+    }
+
+    @Override
+    public String toString(){
+        return String.format(
+                "RecordID: %s | MemberID: %s | ISBN: %s | Borrow Date: %s | Due Date: %s | Return Date: %s | Fine: %f | Returned: %b",
+                recordId, memberId, isbn, borrowDate.toString(), dueDate.toString(), returnDate.toString(), fine, returned
+        );
     }
 }
