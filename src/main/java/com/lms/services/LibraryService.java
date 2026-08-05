@@ -11,18 +11,19 @@ import com.lms.storage.MemberFileHandler;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class LibraryService implements Searchable {
+public class LibraryService implements Searchable<Book> {
 
-    private Map<String, Book> books;
-    private Map<String, Member> members;
-    private Map<String, BorrowRecord> borrowRecords;
-    private BookFileHandler bookFileHandler;
-    private MemberFileHandler memberFileHandler;
-    private BorrowRecordFileHandler borrowRecordFileHandler;
+    private Map<String, Book> books = new HashMap<>();
+    private Map<String, Member> members = new HashMap<>();
+    private Map<String, BorrowRecord> borrowRecords = new HashMap<>();
+    private BookFileHandler bookFileHandler = new BookFileHandler();
+    private MemberFileHandler memberFileHandler = new MemberFileHandler();
+    private BorrowRecordFileHandler borrowRecordFileHandler = new BorrowRecordFileHandler();
     private int bookCounter = 1000;
     private int memberCounter = 1000;
     private int borrowRecordCounter = 1000;
@@ -30,30 +31,39 @@ public class LibraryService implements Searchable {
     public LibraryService() {
         List<Book> bookList = bookFileHandler.loadAll();
         for(Book b: bookList){
-            this.books.put("B"+(bookCounter++), b);
+            this.books.put(b.getIsbn(), b);
         }
         List<Member> memberList = memberFileHandler.loadAll();
         for(Member m: memberList){
-            this.members.put("M"+(memberCounter++), m);
+            this.members.put(m.getMemberId(), m);
         }
         List<BorrowRecord> borrowRecordList = borrowRecordFileHandler.loadAll();
         for(BorrowRecord br: borrowRecordList){
-            this.borrowRecords.put("B"+(borrowRecordCounter++), br);
+            this.borrowRecords.put(br.getRecordId(), br);
         }
+
+        bookCounter = 1000 + bookList.size();
+        memberCounter = 1000 + memberList.size();
+        borrowRecordCounter = 1000 + borrowRecordList.size();
     }
 
     //Book Management
-    public String addBook(String title, String author, Genre genre, int totalCopies, int availableCopies) {
-        String isbn = "B" + (bookCounter++);
+    public String addBook(String title, String author, Genre genre, int totalCopies) {
+        String isbn = "ISBN" + (bookCounter++);
 
-        Book book = new Book(isbn, title, author, genre, totalCopies, availableCopies);
+        Book book = new Book(isbn, title, author, genre, totalCopies);
         books.put(isbn, book);
 
         saveAll();
         return isbn;
     }
 
-    public void removeBook(String isbn) {
+    public void removeBook(String isbn) throws BookNotFoundException, BookNotAvailableException{
+        Book book = books.get(isbn);
+        if (book == null)
+            throw new BookNotFoundException("No book found: " + isbn);
+        if (book.getAvailableCopies() != book.getTotalCopies())
+            throw new BookNotAvailableException("Cannot remove — copies currently borrowed");
         books.remove(isbn);
         saveAll();
     }
@@ -81,31 +91,48 @@ public class LibraryService implements Searchable {
         return memberId;
     }
 
-    public void removeMember(String memberId) {
+    public void removeMember(String memberId) throws MemberNotFoundException, BorrowLimitExceededException{
+        Member member = members.get(memberId);
+        if (member == null)
+            throw new MemberNotFoundException("No member found: " + memberId);
+        if (member.getCurrentBorrowCount() > 0)
+            throw new BorrowLimitExceededException("Cannot remove — member has active borrows");
         members.remove(memberId);
         saveAll();
     }
 
     //Core library operations:
-    public String borrowBook(String memberId, String isbn) throws MemberNotFoundException, BookNotFoundException, BorrowLimitExceededException, BookNotAvailableException {
-        Member member;
-        if (members.containsKey(memberId))
-            member = members.get(memberId);
-        else
-            throw new MemberNotFoundException("No member found with memberId: " + memberId);
+    private Member getMember(String memberId) throws MemberNotFoundException {
+        Member member = members.get(memberId);
+        if (member == null)
+            throw new MemberNotFoundException("No member found: " + memberId);
+        return member;
+    }
 
-        Book book;
-        if (books.containsKey(isbn))
-            book = books.get(isbn);
-        else
-            throw new BookNotFoundException("No book found with ISBN: " + isbn);
+    private Book getBook(String isbn) throws BookNotFoundException {
+        Book book = books.get(isbn);
+        if (book == null)
+            throw new BookNotFoundException("No book found: " + isbn);
+        return book;
+    }
+
+    private BorrowRecord getRecord(String recordId) throws BorrowRecordNotFoundException {
+        BorrowRecord record = borrowRecords.get(recordId);
+        if (record == null)
+            throw new BorrowRecordNotFoundException("No record found: " + recordId);
+        return record;
+    }
+
+    public String borrowBook(String memberId, String isbn) throws MemberNotFoundException, BookNotFoundException, BorrowLimitExceededException, BookNotAvailableException {
+        Member member = getMember(memberId);
+        Book book = getBook(isbn);
 
         if (!member.canBorrow())
             throw new BorrowLimitExceededException("Borrow Limit Exceeded");
 
         book.borrowCopy();
 
-        LocalDate borrowDate = LocalDate.now();
+        LocalDate borrowDate = LocalDate.now().minusDays(50);
         LocalDate dueDate;
         if (member.getMemberType() == MemberType.STUDENT)
             dueDate = borrowDate.plusDays(14);
@@ -123,12 +150,12 @@ public class LibraryService implements Searchable {
         return recordId;
     }
 
-    public double returnBook(String recordId) throws MemberNotFoundException, BookAlreadyReturnedException {
+    public double returnBook(String recordId) throws BorrowRecordNotFoundException, BookAlreadyReturnedException {
         BorrowRecord record;
         if (borrowRecords.containsKey(recordId))
             record = borrowRecords.get(recordId);
         else
-            throw new MemberNotFoundException("No record found with recordId: " + recordId);
+            throw new BorrowRecordNotFoundException("No record found with recordId: " + recordId);
 
         if (record.isReturned())
             throw new BookAlreadyReturnedException("Book Already returned with recordId: " + recordId);
@@ -165,17 +192,10 @@ public class LibraryService implements Searchable {
                 .collect(Collectors.toList());
     }
 
-    public List<Book> searchByGenre(Genre genre){
-        List<Book> result = new ArrayList<>();
-
-        for (Book book : books.values()) {
-            if (book.getGenre() != null &&
-                    book.getGenre() == genre) {
-                result.add(book);
-            }
-        }
-
-        return result;
+    public List<Book> searchByGenre(Genre genre) {
+        return books.values().stream()
+                .filter(b -> b.getGenre() == genre)
+                .collect(Collectors.toList());
     }
 
     public List<BorrowRecord> getOverdueRecords(){
@@ -184,7 +204,9 @@ public class LibraryService implements Searchable {
                 .collect(Collectors.toList());
     }
 
-    public List<BorrowRecord> getMemberBorrowHistory(String memberId) {
+    public List<BorrowRecord> getMemberBorrowHistory(String memberId)
+            throws MemberNotFoundException {
+        getMember(memberId);  // throws if not found
         return borrowRecords.values().stream()
                 .filter(record -> record.getMemberId().equals(memberId))
                 .collect(Collectors.toList());

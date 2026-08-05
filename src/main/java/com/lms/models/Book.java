@@ -12,7 +12,16 @@ public class Book {
     private final int totalCopies;
     private int availableCopies;
 
-    public Book(String isbn, String title, String author, Genre genre, int totalCopies, int availableCopies){
+    public Book(String isbn, String title, String author, Genre genre, int totalCopies){
+        this.isbn = isbn;
+        this.title = title;
+        this.author = author;
+        this.genre = genre;
+        this.totalCopies = totalCopies;
+        this.availableCopies = totalCopies;
+    }
+
+    private Book(String isbn, String title, String author, Genre genre, int totalCopies, int availableCopies){
         this.isbn = isbn;
         this.title = title;
         this.author = author;
@@ -20,6 +29,8 @@ public class Book {
         this.totalCopies = totalCopies;
         this.availableCopies = availableCopies;
     }
+
+
 
     public String getTitle(){
         return this.title;
@@ -74,5 +85,17 @@ public class Book {
                 "ISBN: %s | Title: %s | Author: %s | Genre: %s | Available: %d/%d",
                 isbn, title, author, genre.getDisplayName(), availableCopies, totalCopies
         );
+    }
+
+    public String getIsbn() {
+        return this.isbn;
+    }
+
+    public int getAvailableCopies() {
+        return this.availableCopies;
+    }
+
+    public int getTotalCopies() {
+        return this.totalCopies;
     }
 }

@@ -62,12 +62,15 @@ public abstract class Member {
                 String.join("|", borrowHistory)));
     }
 
-    public static Member fromCSV(String line){
-        String[] parts = line.split(",");
+    public static Member fromCSV(String line) {
+        String[] parts = line.split(",", -1);
+
         if (parts.length != 6) {
             throw new IllegalArgumentException("Invalid CSV record: " + line);
         }
+
         MemberType type = MemberType.valueOf(parts[3]);
+
         List<String> history = parts[5].isEmpty()
                 ? new ArrayList<>()
                 : new ArrayList<>(Arrays.asList(parts[5].split("\\|")));
@@ -94,8 +97,6 @@ public abstract class Member {
             default:
                 throw new IllegalArgumentException("Unknown member type");
         }
-
-
     }
 
     public abstract double calculateFine(LocalDate dueDate);

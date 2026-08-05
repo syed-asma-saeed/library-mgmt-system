@@ -81,7 +81,7 @@ public class BorrowRecord {
     public String toString(){
         return String.format(
                 "RecordID: %s | MemberID: %s | ISBN: %s | Borrow Date: %s | Due Date: %s | Return Date: %s | Fine: %f | Returned: %b",
-                recordId, memberId, isbn, borrowDate.toString(), dueDate.toString(), returnDate.toString(), fine, returned
+                recordId, memberId, isbn, borrowDate.toString(), dueDate.toString(), (returnDate == null) ? "NULL" : returnDate.toString(), fine, returned
         );
     }
 }
