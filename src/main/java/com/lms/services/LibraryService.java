@@ -27,10 +27,19 @@ public class LibraryService implements Searchable {
     private int memberCounter = 1000;
     private int borrowRecordCounter = 1000;
 
-    public LibraryService(Map<String, Book> books, Map<String, Member> members, Map<String, BorrowRecord> borrowRecords) {
-        this.books = books;
-        this.members = members;
-        this.borrowRecords = borrowRecords;
+    public LibraryService() {
+        List<Book> bookList = bookFileHandler.loadAll();
+        for(Book b: bookList){
+            this.books.put("B"+(bookCounter++), b);
+        }
+        List<Member> memberList = memberFileHandler.loadAll();
+        for(Member m: memberList){
+            this.members.put("M"+(memberCounter++), m);
+        }
+        List<BorrowRecord> borrowRecordList = borrowRecordFileHandler.loadAll();
+        for(BorrowRecord br: borrowRecordList){
+            this.borrowRecords.put("B"+(borrowRecordCounter++), br);
+        }
     }
 
     //Book Management
