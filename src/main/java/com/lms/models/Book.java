@@ -21,6 +21,17 @@ public class Book {
         this.availableCopies = availableCopies;
     }
 
+    public String getTitle(){
+        return this.title;
+    }
+
+    public String getAuthor(){
+        return this.author;
+    }
+    public Genre getGenre(){
+        return this.genre;
+    }
+
     public void borrowCopy() throws BookNotAvailableException{
         if(availableCopies <= 0){
             throw new BookNotAvailableException("This book is not available at the moment.");
